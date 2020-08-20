@@ -1,0 +1,2 @@
+APN: com.example.walk_or_silence
+SHA1: 46:DF:99:B7:30:68:53:A3:57:D1:6B:4C:CA:54:63:8D:D3:28:21:71
