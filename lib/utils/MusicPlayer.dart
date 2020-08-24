@@ -1,14 +1,20 @@
 import 'package:audioplayers/audio_cache.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:pedometer/pedometer.dart';
+import 'package:walk_or_silence/services/SpotifyController.dart';
 
 class MusicPlayer {
   AudioPlayer advancedPlayer;
   AudioCache audioCache;
+
   Stream<PedestrianStatus> _pedestrianStatusStream;
+
   Duration _duration = new Duration();
   Duration _position = new Duration();
+
   String _status = '?';
+
+  SpotifyController spotifyController;
 
   MusicPlayer() {
     advancedPlayer = new AudioPlayer();
@@ -39,6 +45,11 @@ class MusicPlayer {
     _pedestrianStatusStream
         .listen(onPedestrianStatusChanged)
         .onError(onPedestrianStatusError);
+    spotifyController = SpotifyController();
+  }
+
+  void play() {
+    spotifyController.play();
   }
 
   void seekToSecond(int second) {
@@ -50,7 +61,7 @@ class MusicPlayer {
     // Handle status changed
     _status = event.status;
     if (_status == 'walking')
-      audioCache.play('audio.mp3');
+      audioCache.play('audio.mp3'); //wakawaka
     else if (_status == 'stopped') advancedPlayer.pause();
   }
 
