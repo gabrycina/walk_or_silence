@@ -18,35 +18,38 @@ class WalkOrSilence extends StatefulWidget {
 class _WalkOrSilenceState extends State<WalkOrSilence> {
   MusicPlayer musicPlayer = MusicPlayer();
   var axes = <List<double>>[];
-  var N = 64;
+  var N = 32;
+  var tmpList = <GyroscopeEvent>[];
+  var start = false;
 
   @override
   void initState() {
     super.initState();
+    gyroscopeEvents.listen((event) {
+      if (tmpList.length < N) {
+        tmpList.add(event);
+      }
+    });
+
     // setState(() {
     //   musicPlayer.setDuration();
     //   musicPlayer.setPosition();
     // });
     // musicPlayer.subscribeToStatusStream();
-    //Fill axes matrix with detection's values
-    gyroscopeEvents.listen((event) {
-      if (axes.length != N) {
-        print(event);
-        var list = <double>[];
-        list.add(event.x);
-        list.add(event.y);
-        list.add(event.z);
-        axes.add(list);
-        print(axes.length);
-      }
-    });
   }
 
   void detectWalking() async {
-    print(axes.length);
-    axes.clear();
-    await new Future.delayed(const Duration(seconds: 20));
-    if (axes.length >= N) {
+    if (tmpList.length == N) {
+      for (var detection in tmpList) {
+        var list = <double>[];
+        list.add(detection.x);
+        list.add(detection.y);
+        list.add(detection.z);
+        axes.add(list);
+      }
+      //Empty tmplist to continuosly collecting data
+      tmpList.clear();
+
       //Calculate the most sensitive axis
       var sumOfX = 0.0;
       var sumOfY = 0.0;
@@ -78,13 +81,14 @@ class _WalkOrSilenceState extends State<WalkOrSilence> {
         }
       }
 
+      print(mostSensitiveAxis.length);
       //Fast Fourier Transfotmation on the most sensitive axis
       var fft = FFT().Transform(mostSensitiveAxis);
       print('Fft: $fft');
 
       //Calculate frequency for every detection 0 to N-1
       for (var n = 0; n < N; n++) {
-        var fn = (n - 1) * 20 / N;
+        var fn = (n - 1) * 10 / N;
         print('n=$n and fn=$fn');
       }
 
@@ -114,6 +118,10 @@ class _WalkOrSilenceState extends State<WalkOrSilence> {
       } else {
         print('he is not');
       }
+
+      axes.clear();
+    } else {
+      print('not yet: ${tmpList.length}');
     }
   }
 
@@ -128,30 +136,3 @@ class _WalkOrSilenceState extends State<WalkOrSilence> {
         ));
   }
 }
-
-// StreamBuilder(
-//   stream: gyroscopeEvents,
-//   builder: (BuildContext context, AsyncSnapshot snapshot) {
-//     if (snapshot.connectionState == ConnectionState.active)
-//       return Container(
-//         child: Text(snapshot.data.toString()),
-//       );
-//     else
-//       return Container(
-//         child: Text('not active yet'),
-//       );
-//   },
-// ),
-
-// StreamBuilder(
-//     stream: musicPlayer.getPedestrianStatusStream(),
-//     builder: (context, snapshot) {
-//       if (snapshot.connectionState == ConnectionState.waiting) {
-//         return Text("No data yet");
-//       } else if (snapshot.connectionState ==
-//           ConnectionState.active) {
-//         return Text(musicPlayer.getStatus());
-//       } else if (snapshot.hasError) {
-//         return Text('Error!');
-//       }
-//     }),
