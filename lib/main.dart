@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'utils/MusicPlayer.dart';
 import 'package:sensors/sensors.dart';
@@ -19,18 +21,12 @@ class _WalkOrSilenceState extends State<WalkOrSilence> {
   MusicPlayer musicPlayer = MusicPlayer();
   var axes = <List<double>>[];
   var N = 32;
-  var tmpList = <GyroscopeEvent>[];
-  var start = false;
+  var tmpList;
+  var timer;
 
   @override
   void initState() {
     super.initState();
-    gyroscopeEvents.listen((event) {
-      if (tmpList.length < N) {
-        tmpList.add(event);
-      }
-    });
-
     // setState(() {
     //   musicPlayer.setDuration();
     //   musicPlayer.setPosition();
@@ -38,7 +34,24 @@ class _WalkOrSilenceState extends State<WalkOrSilence> {
     // musicPlayer.subscribeToStatusStream();
   }
 
+  void startRecording() {
+    tmpList = new List<GyroscopeEvent>();
+    GyroscopeEvent gyroscopeEvent;
+    timer = Timer.periodic(Duration(milliseconds: 3), (timer) {
+      gyroscopeEvents.listen((GyroscopeEvent event) {
+        gyroscopeEvent = GyroscopeEvent(event.x, event.y, event.z);
+      });
+      if(tmpList.length < 32){
+        if(gyroscopeEvent != null)
+          tmpList.add(gyroscopeEvent);
+      } else if(tmpList.length == 32){
+        detectWalking();
+      }
+    });
+  }
+
   void detectWalking() async {
+    print(tmpList);
     if (tmpList.length == N) {
       for (var detection in tmpList) {
         var list = <double>[];
@@ -131,7 +144,7 @@ class _WalkOrSilenceState extends State<WalkOrSilence> {
         appBar: AppBar(title: Text("WalkOrSilence Demo")),
         body: Column(
           children: [
-            FlatButton(onPressed: () => detectWalking(), child: Text("Play"))
+            FlatButton(onPressed: () => startRecording(), child: Text("Play"))
           ],
         ));
   }
