@@ -22,7 +22,6 @@ environment:
 
 dependencies:
   audioplayers: ^0.15.1
-  pedometer: ^2.0.1+2
   spotify_auth_player: ^0.1.7
   sensors: ^0.4.2+4
   fft: ^0.2.0

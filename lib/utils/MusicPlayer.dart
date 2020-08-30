@@ -1,77 +1,62 @@
-import 'package:audioplayers/audio_cache.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:pedometer/pedometer.dart';
+import 'dart:async';
+import 'WalkDetector.dart';
 import 'package:walk_or_silence/services/SpotifyController.dart';
 
 class MusicPlayer {
-  AudioPlayer advancedPlayer;
-  AudioCache audioCache;
-
-  Stream<PedestrianStatus> _pedestrianStatusStream;
-
-  Duration _duration = new Duration();
-  Duration _position = new Duration();
-
-  String _status = '?';
-
+  String _status = 'stopped';
   SpotifyController spotifyController;
+  var walkDetector = WalkDetector();
+  StreamSubscription<String> subscription;
 
-  MusicPlayer() {
-    advancedPlayer = new AudioPlayer();
-    audioCache = new AudioCache(fixedPlayer: advancedPlayer);
-  }
-
-  //Setters
-  void setDuration() {
-    advancedPlayer.durationHandler = (d) => _duration = d;
-  }
-
-  void setPosition() {
-    advancedPlayer.positionHandler = (p) => _duration = p;
-  }
-
-  //Getters
-  Stream<PedestrianStatus> getPedestrianStatusStream() {
-    return _pedestrianStatusStream;
-  }
-
-  String getStatus() {
-    return _status;
-  }
+  String get getStatus => _status;
 
   //Functions
   subscribeToStatusStream() async {
-    _pedestrianStatusStream = await Pedometer.pedestrianStatusStream;
-    _pedestrianStatusStream
-        .listen(onPedestrianStatusChanged)
-        .onError(onPedestrianStatusError);
     spotifyController = SpotifyController();
+
+    Future.delayed(Duration(seconds: 3), () {
+      //Connection to status stream
+      var statusStream = walkDetector.startRecording();
+      subscription = statusStream.listen(onWalkingStatusChanged);
+    });
   }
 
-  void play() {
+  pauseStatusStream() async {
+    subscription.pause();
+    pause();
+  }
+
+  play() {
     spotifyController.play();
   }
 
-  void seekToSecond(int second) {
-    Duration newDuration = Duration(seconds: second);
-    advancedPlayer.seek(newDuration);
+  pause() {
+    spotifyController.pause();
   }
 
-  void onPedestrianStatusChanged(PedestrianStatus event) {
+  resume() {
+    spotifyController.resume();
+  }
+
+  //TODO resume, seekTo, skipNext and skipPrevious
+
+  onWalkingStatusChanged(newStatus) {
+    print(_status);
+    print(newStatus);
+
     // Handle status changed
-    _status = event.status;
-    if (_status == 'walking')
-      audioCache.play('audio.mp3'); //wakawaka
-    else if (_status == 'stopped') advancedPlayer.pause();
+    if (_status == 'stopped' && newStatus == 'walking') {
+      resume();
+    } else if (_status == 'walking' && newStatus == 'stopped') {
+      pause();
+    }
+    _status = newStatus;
   }
 
-  void onPedestrianStatusError(error) {
-    /// Handle the error
+  onWalkingStatusError(error) {
     print(error);
   }
 
-  void onStepCountError(error) {
-    /// Handle the error
-    print(error);
-  }
+//TODO: Rewrite seekToSecond
+//TODO: Rewrite setDuration and setPosition
 }

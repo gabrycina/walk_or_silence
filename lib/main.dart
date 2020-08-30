@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'utils/MusicPlayer.dart';
-import 'utils/WalkDetector.dart';
 
 typedef void OnError(Exception exception);
 
@@ -15,16 +14,10 @@ class WalkOrSilence extends StatefulWidget {
 
 class _WalkOrSilenceState extends State<WalkOrSilence> {
   MusicPlayer musicPlayer = MusicPlayer();
-  WalkDetector walkDetector = WalkDetector();
 
   @override
   void initState() {
     super.initState();
-    // setState(() {
-    //   musicPlayer.setDuration();
-    //   musicPlayer.setPosition();
-    // });
-    // musicPlayer.subscribeToStatusStream();
   }
 
   @override
@@ -33,7 +26,8 @@ class _WalkOrSilenceState extends State<WalkOrSilence> {
         appBar: AppBar(title: Text("WalkOrSilence Demo")),
         body: Column(
           children: [
-            FlatButton(onPressed: () => walkDetector.startRecording(), child: Text("Play"))
+            FlatButton(onPressed: () => musicPlayer.subscribeToStatusStream(), child: Text("Play")),
+            FlatButton(onPressed: () => musicPlayer.pauseStatusStream(), child: Text("Pause"))
           ],
         ));
   }

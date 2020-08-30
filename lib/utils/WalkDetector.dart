@@ -9,23 +9,46 @@ class WalkDetector {
   var tmpList;
   var timer;
 
-  void startRecording() {
+  Stream<String> startRecording() {
+    var controller = StreamController<String>();
     tmpList = new List<GyroscopeEvent>();
     GyroscopeEvent gyroscopeEvent;
-    timer = Timer.periodic(Duration(milliseconds: 48), (timer) {
+    var result;
+
+    void tick(_) async {
       gyroscopeEvents.listen((GyroscopeEvent event) {
         gyroscopeEvent = GyroscopeEvent(event.x, event.y, event.z);
       });
-      if(tmpList.length < N){
-        if(gyroscopeEvent != null)
-          tmpList.insert(0, gyroscopeEvent);
-      } else if(tmpList.length == N){
-        detectWalking();
+      if (tmpList.length < N) {
+        if (gyroscopeEvent != null) tmpList.insert(0, gyroscopeEvent);
+      } else if (tmpList.length == N) {
+        result = detectWalking();
+        controller.add(result);
       }
-    });
+    }
+
+    void startTimer() {
+      timer = Timer.periodic(Duration(milliseconds: 48), tick);
+    }
+
+    void stopTimer() {
+      if (timer != null) {
+        timer.cancel();
+        timer = null;
+      }
+    }
+
+    controller = StreamController<String>(
+        onListen: startTimer,
+        onPause: stopTimer,
+        onResume: startTimer,
+        onCancel: stopTimer);
+
+    return controller.stream;
   }
 
-  void detectWalking() async {
+  // ignore: missing_return
+  String detectWalking() {
     print(tmpList);
     if (tmpList.length == N) {
       for (var detection in tmpList) {
@@ -91,20 +114,29 @@ class WalkDetector {
       }
       print(amplitudes);
 
-      var omegaC = ((amplitudes[3] + amplitudes[4] + amplitudes[5] + amplitudes[6] + amplitudes[7]) / 5);
+      var omegaC = ((amplitudes[3] +
+              amplitudes[4] +
+              amplitudes[5] +
+              amplitudes[6] +
+              amplitudes[7] +
+              amplitudes[8]) /
+          5);
 
       var omega0 = ((amplitudes[0] + amplitudes[1] + amplitudes[2]) / 3);
 
       print('omegaC = $omegaC');
       print('omega0 = $omega0');
 
+      //TODO repeated code -> refactor
       if (omegaC > omega0 && omegaC > 10) {
         print('is walking');
+        axes.clear();
+        return 'walking';
       } else {
         print('he is not');
+        axes.clear();
+        return 'stopped';
       }
-
-      axes.clear();
     } else {
       print('not yet: ${tmpList.length}');
     }

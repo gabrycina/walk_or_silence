@@ -3,7 +3,6 @@ import 'package:spotify_auth_player/spotify_auth_player.dart';
 class SpotifyController {
   SpotifyController() {
     connection();
-    
   }
 
   void connection() async {
@@ -18,5 +17,15 @@ class SpotifyController {
           playlistUri: "spotify:playlist:37i9dQZF1DX3rxVfibe1L0");
       print("played");
     }
+  }
+
+  void pause() async {
+    await Spotifire.pauseMusic;
+    print("paused");
+  }
+
+  void resume() async {
+    await Spotifire.resumeMusic;
+    print("resumed");
   }
 }
